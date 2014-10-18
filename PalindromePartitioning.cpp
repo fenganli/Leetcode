@@ -18,12 +18,11 @@ class Solution
 					vec.push_back(true);
 				else
 					vec.push_back(false);
-			matrix.push_back(vec);
 		}
 		for (int step  = 3; step <= size; step ++)
 			for (int i = 0; i <= size - step; i++)
 				if (s[i] == s[i+step-1] && matrix[i+1][i+step-2])
-					matrix[i][i+step-1] = true;
+					vec[i][i+step-1] = true;
 		for (int i = 0; i < size; i++)
 		{
 			if (matrix[0][i])

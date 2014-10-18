@@ -1,10 +1,8 @@
 class CellCount
 {
-	int x;
-	int y;
-	int count;
-public:
-	CellCount(int _x, int _y, int _count):x(_x), y(_y), count(_count) {}
+	int x, y, count;
+	public:
+	Count(int _x, int _y, int _count):x(_x), y(_y), count(_count) {}
 	int getX()
 	{
 		return x;
@@ -13,34 +11,33 @@ public:
 	{
 		return y;
 	}
-	int getCount() const
+	int getCount()
 	{
 		return count;
 	}
 };
 bool cmp(const CellCount & T1, const CellCount & T2)
 {
-	return T1.getCount() < T2.getCount();
+	return T1.count < T2.count;
 }
 class Solution
 {
-	bool matrix[9][9][10];
-public:
+	unordered_set<int> matrix[9][9];
+	public:
 	void solveSudoku(vector<vector<char> > &board)
 	{
 		for (int i = 0; i < 9; i++)
 			for (int j = 0; j < 9; j++)
 				for (int k = 1; k <= 9; k++)
-					matrix[i][j][k] = true;
+					matrix[i][j].insert(k);
 		int filledCount = 0;
 		for (int i = 0; i < 9; i++)
 			for (int j = 0; j < 9; j++)
-				if (board[i][j] != '.')
+				if (board[i][j] != ' ')
 				{
 					filledCount++;
 					eliminate(i, j, board[i][j] - '0');
 				}
-		//cout << filledCount << endl;
 		search(filledCount, board);
 		return;
 	}
@@ -48,66 +45,48 @@ public:
 	{
 		if (step == 81)
 			return true;
-		CellCount minNum(0,0,100);
+		vector<CellCount> vec;
 		for (int i = 0; i < 9; i++)
 			for (int j = 0; j < 9;j++)
-				if (board[i][j] == '.')
-				{
-				    int count = 0;
-				    for (int k = 1; k <= 9; k++)
-				        if (matrix[i][j][k])
-				            count++;
-					if (count < minNum.getCount())
-					    minNum = CellCount(i, j, count);
-				}
-		if (minNum.getCount() == 0)
+				if (board[i][j] == ' ')
+					vec.push_back(CellCount(i, j, matrix[i][j].size()));
+		sort(vec.begin(), vec.end(), cmp);
+		int size = vec.size();
+		if (vec[0].getCount() == 0)
 			return false;
-		int x = minNum.getX();
-		int y = minNum.getY();
-		for (int k = 1; k <= 9; k++)
+		unordered_set<int> memory[9][9];
+		for (int j = 0;j < 9; j++)
+			for (int k = 0; k < 9; k++)
+				memory[j][k] = matrix[j][k];
+		for (int i = 0; i < size; i++)
 		{
-			if (matrix[x][y][k] == false)
-			    continue;
-			board[x][y] = (char)(k + '0');
-			vector<pair<int, int> > eVec = eliminate(x, y, k);
-			if (search(step + 1, board))
-				return true;
-			for (vector<pair<int, int> >::iterator eIter = eVec.begin(); eIter != eVec.end(); eIter++)
-			    matrix[eIter -> first][eIter -> second][k] = true;
-			board[x][y] = '.';
+			int x = vec[i].getX();
+			int y = vec[j].getY();
+			for (unordered_set<int>::iterator iter = matrix[x][y].begin(); iter != matrix[x][y].end(); iter++)
+			{
+				board[x][y] = (char)(*iter + '0');
+				eliminate(x, y, *iter + '0');
+				if (search(step + 1, board))
+					return true;
+				for (int j = 0; j < 9; j++)
+					for (int k = 0; k < 9; k++)
+						matrix[j][k] = memory[j][k];
+				board[x][y] = ' ';
+			}
 		}
 		return false;
 	}
-	vector<pair<int, int> > eliminate(int row, int col, int num)
+	void eliminate(int row, int col, int num)
 	{
-	    vector<pair<int, int> > returnVec;
 		for (int j = 0; j < 9; j++)
-		{
-		    if (matrix[row][j][num])
-		    {
-		        matrix[row][j][num] = false;
-		        returnVec.push_back(make_pair(row, j));
-		    }
-		}
+			matrix[row][j].erase(num);
 		for (int i = 0; i < 9; i++)
-		{
-		    if (matrix[i][col][num])
-		    {
-		        matrix[i][col][num] = false;
-		        returnVec.push_back(make_pair(i, col));
-		    }
-		}
+			matrix[i][col].erase(num);
 		int startI = (row / 3) * 3;
 		int startJ = (col / 3) * 3;
 		for (int i = startI; i < startI + 3; i++)
 			for (int j = startJ; j < startJ + 3; j++)
-			{
-			    if (matrix[i][j][num])
-			    {
-			        matrix[i][j][num] = false;
-			        returnVec.push_back(make_pair(i, j));
-			    }
-			}
-		return returnVec;;
+				matrix[i][j].erase(num);
+		return;
 	}
 };
